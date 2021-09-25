@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from datetime import datetime, timedelta
-from mongo import *
+from stock_module.mongo import *
 
 industry = {
     "油電燃氣": ["1434", "1714", "6505", "8926"],
