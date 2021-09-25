@@ -4,7 +4,7 @@ import pandas as pd
 from io import StringIO
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-from mongo import *
+from stock_module.mongo import *
 
 ua = UserAgent()
 headers = {"UserAgent": ua.random}
