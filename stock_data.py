@@ -1,5 +1,5 @@
 import pandas as pd
-from mongo import *
+from stock_module.mongo import *
 
 stocks_list = pd.DataFrame(db["stocks_list"].find()).drop(columns="_id").set_index("stock_id")
 
