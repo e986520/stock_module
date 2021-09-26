@@ -69,10 +69,10 @@ class Select_Data:
         self.SMA60 = self.收盤價.iloc[-60:].mean()
 
         # 籌碼面資料
-        self.投信買賣超張數 = get_data("legal_person", "投信買賣超張數", 1)
+        self.投信買賣超張數 = get_data("legal_person", "投信買賣超張數", 6)
         self.當日投信買賣超 = self.投信買賣超張數.iloc[-1]
-        self.融資使用率 = get_data("margin_trading", "融資使用率", 1)
-        self.融券使用率 = get_data("margin_trading", "融券使用率", 1)
+        self.融資使用率 = get_data("margin_trading", "融資使用率", 6)
+        self.融券使用率 = get_data("margin_trading", "融券使用率", 6)
         self.當日融資使用率 = self.融資使用率.iloc[-1]
         self.當日融券使用率 = self.融券使用率.iloc[-1]
         self.當日券資比 = self.當日融券使用率 / self.當日融資使用率 * 100
