@@ -522,8 +522,8 @@ def dataframe(industry, data):
 
 def create_index():
     df = pd.DataFrame()
-    for i, key in enumerate(industry):
-        data = get_price_data(industry[key])
+    for key, value in industry.items():
+        data = get_price_data(value)
         df2 = dataframe(key, data)
         df = pd.concat([df, df2.tail(1)])
 
