@@ -79,75 +79,31 @@ class Select_Data:
 
     # 選股清單
     def select_list(self, select_stock, PE=0):
-        stock = list(select_stock[select_stock].index)
-        price = [self.目前股價[x] for x in list((select_stock[select_stock].index))]
-        rise = [round((self.漲幅[x] - 1) * 100, 2) for x in list((select_stock[select_stock].index))]
-        volume = [round(self.當日成交值[x] / 100000000, 1) for x in list((select_stock[select_stock].index))]
-        volume_percent = [round(self.當日成交量[x] / self.昨日成交量[x], 1) for x in list((select_stock[select_stock].index))]
+        # list(select_stock[select_stock].index)
+        price = [self.目前股價[x] for x in select_stock]
+        rise = [round((self.漲幅[x] - 1) * 100, 2) for x in select_stock]
+        volume = [round(self.當日成交值[x] / 100000000, 1) for x in select_stock]
+        volume_percent = [round(self.當日成交量[x] / self.昨日成交量[x], 1) for x in select_stock]
+        leagal_person = list(map(lambda x: self.legal_person_except(x), select_stock))
 
         try:
-            tax = [round(self.平均稅率[x], 2) for x in list((select_stock[select_stock].index))]
-            remark = [self.當月營收備註[x] for x in list((select_stock[select_stock].index))]
-            leagal_person = [int(self.當日投信買賣超[x]) for x in list((select_stock[select_stock].index))]
+            tax = [round(self.平均稅率[x], 2) for x in select_stock]
+            remark = [self.當月營收備註[x] for x in select_stock]
 
             if PE == 0:
-                appraisal = [round(self.淨值比預估股價[x], 2) for x in list((select_stock[select_stock].index))]
-            if PE == 10:
-                appraisal = [round(self.預估股價地板[x], 2) for x in list((select_stock[select_stock].index))]
-            elif PE == 15:
-                appraisal = [round(self.預估股價夾板[x], 2) for x in list((select_stock[select_stock].index))]
-            elif PE == 20:
-                appraisal = [round(self.預估股價天花板[x], 2) for x in list((select_stock[select_stock].index))]
-
-        except:
-            leagal_person = 0
-            tax = 0
-            appraisal = 0
-            remark = "-"
-
-        df = stocks_list.loc[stock].drop(columns="市場")
-        df["股價"] = price
-        df["漲幅"] = list(map(lambda x: str(x) + "%", rise))
-        df["成值"] = list(map(lambda x: str(x) + "E", volume))
-        df["量比"] = volume_percent
-        df["估價"] = appraisal
-        df["空間"] = round((df["估價"] / df["股價"] - 1) * 100, 1)
-        df["稅率"] = tax
-        df["投信"] = leagal_person
-        df["營收備註"] = remark
-        df = df.sort_values(["空間", "投信"], ascending=False)
-        df["空間"] = df["空間"].astype(str) + "%"
-
-        return df
-
-    # 產業成分股清單
-    def industry_list(self, industry_stock, PE=0):
-        stock = list(sorted(industry_stock))
-        price = [self.目前股價[x] for x in list(sorted(industry_stock))]
-        rise = [round((self.漲幅[x] - 1) * 100, 2) for x in list(sorted(industry_stock))]
-        volume = [round(self.當日成交值[x] / 100000000, 1) for x in list(sorted(industry_stock))]
-        volume_percent = [round(self.當日成交量[x] / self.昨日成交量[x], 1) for x in list(sorted(industry_stock))]
-
-        try:
-            tax = [round(self.平均稅率[x], 2) for x in list(sorted(industry_stock))]
-            remark = [self.當月營收備註[x] for x in list(sorted(industry_stock))]
-            leagal_person = [int(self.當日投信買賣超[x]) for x in list(sorted(industry_stock))]
-
-            if PE == 0:
-                appraisal = [round(self.淨值比預估股價[x], 2) for x in list(sorted(industry_stock))]
-
+                appraisal = [round(self.淨值比預估股價[x], 2) for x in select_stock]
             else:
                 appraisal = [
                     round(self.預估稅前純益[x] * self.稅率[x] * self.近一季每股盈餘[x] / self.近一季稅後淨利[x] * 4 * PE, 2)
-                    for x in list((sorted(industry_stock)))
+                    for x in select_stock
                 ]
+
         except:
-            leagal_person = 0
             tax = 0
             appraisal = 0
             remark = "-"
 
-        df = stocks_list.loc[stock].drop(columns="市場")
+        df = stocks_list.loc[select_stock].drop(columns="市場")
         df["股價"] = price
         df["漲幅"] = list(map(lambda x: str(x) + "%", rise))
         df["成值"] = list(map(lambda x: str(x) + "E", volume))
@@ -159,4 +115,12 @@ class Select_Data:
         df["營收備註"] = remark
         df = df.sort_values(["空間", "投信"], ascending=False)
         df["空間"] = df["空間"].astype(str) + "%"
+
         return df
+
+    def legal_person_except(self, stock):
+        try:
+            leagal_person = int(self.當日投信買賣超[stock])
+        except:
+            leagal_person = 0
+        return leagal_person
