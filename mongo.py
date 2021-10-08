@@ -12,21 +12,34 @@ def save_to_mongo(func, coll, date_range=False):
     collection = db[coll]
     if date_range:
         for i, date in enumerate(date_range):
+            # 更新營收前先刪掉當月不完整的營收以便重新更新
+            if coll == "monthly_revenue":
+                timestamp = to_timestamp(pd.to_datetime(date))
+                collection.delete_many({"date": timestamp})
+
             print(f"crawling {coll} {date} ({i + 1}/{len(date_range)})")
             data = func(pd.to_datetime(date))
             if data is None:
                 print("Fail! maybe it's a holiday.")
             else:
-                collection.insert_many(data, ordered=True)
+                try:
+                    collection.insert_many(data, ordered=True)
+                    print("Success update new data!")
+                except (pymongo.errors.BulkWriteError):
+                    print("Fail! there is duplicate data.")
+                    continue
             time.sleep(10)
     else:
         data = func
-        collection.insert_many(data, ordered=True)
+        try:
+            collection.insert_many(data, ordered=True)
+            print("Success update new data!")
+        except (pymongo.errors.BulkWriteError):
+            print("Fail! there is duplicate data.")
 
-    print("Success update new data!")
-
+    # 刪掉舊資料
     if coll == "margin_trading" or coll == "legal_person":
-        days = 1
+        days = 31
         delete_data(days, collection)
     elif coll == "ADL":
         days = 365
