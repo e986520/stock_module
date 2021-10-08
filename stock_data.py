@@ -71,6 +71,7 @@ class Select_Data:
         # 籌碼面資料
         self.投信買賣超張數 = get_data("legal_person", "投信買賣超張數", 6)
         self.當日投信買賣超 = self.投信買賣超張數.iloc[-1]
+        self.近一月投信買賣超 = self.投信買賣超張數.iloc[-20:].sum()
         self.融資使用率 = get_data("margin_trading", "融資使用率", 6)
         self.融券使用率 = get_data("margin_trading", "融券使用率", 6)
         self.當日融資使用率 = self.融資使用率.iloc[-1]
@@ -84,7 +85,8 @@ class Select_Data:
         rise = [round((self.漲幅[x] - 1) * 100, 2) for x in select_stock]
         volume = [round(self.當日成交值[x] / 100000000, 1) for x in select_stock]
         volume_percent = [round(self.當日成交量[x] / self.昨日成交量[x], 1) for x in select_stock]
-        leagal_person = list(map(lambda x: self.legal_person_except(x), select_stock))
+        leagal_person_today = list(map(lambda x: self.legal_person_except(x, "today"), select_stock))
+        leagal_person_month = list(map(lambda x: self.legal_person_except(x, "month"), select_stock))
 
         try:
             tax = [round(self.平均稅率[x], 2) for x in select_stock]
@@ -111,16 +113,24 @@ class Select_Data:
         df["估價"] = appraisal
         df["空間"] = round((df["估價"] / df["股價"] - 1) * 100, 1)
         df["稅率"] = tax
-        df["投信"] = leagal_person
+        df["投信"] = leagal_person_today
+        df["近月投信"] = leagal_person_month
         df["營收備註"] = remark
         df = df.sort_values(["空間", "投信"], ascending=False)
         df["空間"] = df["空間"].astype(str) + "%"
 
         return df
 
-    def legal_person_except(self, stock):
-        try:
-            leagal_person = int(self.當日投信買賣超[stock])
-        except:
-            leagal_person = 0
-        return leagal_person
+    def legal_person_except(self, stock, range):
+        if range == "today":
+            try:
+                leagal_person = int(self.當日投信買賣超[stock])
+            except:
+                leagal_person = 0
+            return leagal_person
+        if range == "month":
+            try:
+                leagal_person = int(self.近一月投信買賣超[stock])
+            except:
+                leagal_person = 0
+            return leagal_person
