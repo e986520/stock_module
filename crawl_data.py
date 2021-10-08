@@ -350,42 +350,28 @@ def crawl_monthly_revenue(date):
     print(url)
     r = requests.get(url, headers=headers)
     r.encoding = "big5"
-    soup = BeautifulSoup(r.text, "lxml")
-    trs = soup.find_all("tr", {"align": "right"})
-    stocks_list = {}
-    for tr in trs:
-        if "合計" not in tr.text and "總計" not in tr.text:
-            tds = tr.find_all("td")
-            stock_id = tds[0].text
-            monthly_revenue = int(tds[2].text.replace(",", "")) / 1000
-            mom = tds[5].text.strip()
-            yoy = tds[6].text.strip()
-            remark = tds[10].text.strip()
-            stocks_list[stock_id] = [monthly_revenue, mom, yoy, remark]
-
-    df1 = pd.DataFrame.from_dict(stocks_list, orient="index", columns=["當月營收", "MOM%", "YOY%", "備註"])
-    df1.index.name = "stock_id"
+    dfs = pd.read_html(StringIO(r.text))
+    df = pd.concat([df for df in dfs if df.shape[1] <= 11 and df.shape[1] > 5])
+    df.columns = df.columns.get_level_values(1)
+    df = df[["公司代號", "當月營收", "上月比較增減(%)", "去年同月增減(%)", "備註"]]
+    df["當月營收"] = df["當月營收"] / 1000
+    df = df.rename(columns={"公司代號": "stock_id", "上月比較增減(%)": "MOM%", "去年同月增減(%)": "YOY%"})
+    df = df.set_index("stock_id")
+    df1 = df.drop(["合計", "總計"])
 
     # 上櫃
     url = f"https://mops.twse.com.tw/nas/t21/otc/t21sc03_{str(date.year - 1911)}_{str(date.month)}.html"
     print(url)
     r = requests.get(url, headers=headers)
     r.encoding = "big5"
-    soup = BeautifulSoup(r.text, "lxml")
-    trs = soup.find_all("tr", {"align": "right"})
-    stocks_list = {}
-    for tr in trs:
-        if "合計" not in tr.text and "總計" not in tr.text:
-            tds = tr.find_all("td")
-            stock_id = tds[0].text
-            monthly_revenue = int(tds[2].text.replace(",", "")) / 1000
-            mom = tds[5].text.strip()
-            yoy = tds[6].text.strip()
-            remark = tds[10].text.strip()
-            stocks_list[stock_id] = [monthly_revenue, mom, yoy, remark]
-
-    df2 = pd.DataFrame.from_dict(stocks_list, orient="index", columns=["當月營收", "MOM%", "YOY%", "備註"])
-    df2.index.name = "stock_id"
+    dfs = pd.read_html(StringIO(r.text))
+    df = pd.concat([df for df in dfs if df.shape[1] <= 11 and df.shape[1] > 5])
+    df.columns = df.columns.get_level_values(1)
+    df = df[["公司代號", "當月營收", "上月比較增減(%)", "去年同月增減(%)", "備註"]]
+    df["當月營收"] = df["當月營收"] / 1000
+    df = df.rename(columns={"公司代號": "stock_id", "上月比較增減(%)": "MOM%", "去年同月增減(%)": "YOY%"})
+    df = df.set_index("stock_id")
+    df2 = df.drop(["合計", "總計"])
 
     df = pd.concat([df1, df2])
     df["MOM%"] = pd.to_numeric(df["MOM%"], "coerce")
