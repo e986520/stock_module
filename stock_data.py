@@ -53,8 +53,8 @@ class Select_Data:
         self.目前股價 = self.收盤價.iloc[-1]
         self.昨日股價 = self.收盤價.iloc[-2]
         self.漲幅 = self.目前股價 / self.昨日股價
-        self.月線扣抵值 = self.收盤價.iloc[-20]
-        self.季線扣抵值 = self.收盤價.iloc[-60]
+        self.月線扣抵值 = self.收盤價.iloc[-21]
+        self.季線扣抵值 = self.收盤價.iloc[-61]
         self.成交量 = get_data("price", "成交股數", 6) / 1000
         self.當日成交量 = self.成交量.iloc[-1]
         self.昨日成交量 = self.成交量.iloc[-2]
