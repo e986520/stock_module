@@ -232,6 +232,178 @@ def crawl_legal_person(date):
 
     return json_data
 
+def crawl_future_option(date):
+    time = pd.to_datetime(date)
+
+    # 大台總留倉量
+    try:
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/futDailyMarketReport?queryType=2&commodity_id=TX&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[4][["到期月份(週別)", "*未沖銷契約量"]]
+        df_1 = pd.DataFrame(df["*未沖銷契約量"]).head(2).T
+        df_1.index = [time]
+        df_1.columns = ["近月大台留倉", "遠月大台留倉"]
+    except:
+        return None
+
+    # 當日法人大小台期貨籌碼
+    try:
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/futContractsDate?queryType=1&commodityId=TXF&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[3].dropna().drop([0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14], axis=1).drop([2, 4, 6, 7, 8, 9])
+        df.columns = ["", "當日交易", "總留倉"]
+        df = df.set_index("")
+        df.index = ["自營期貨(口)", "外資期貨(口)"]
+        df = pd.DataFrame(df.unstack()).T
+        df.index = [time]
+        df1 = df.astype(int)
+
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/futContractsDate?queryType=1&commodityId=MXF&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[3].dropna().drop([0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14], axis=1).drop([2, 4, 6, 7, 8, 9])
+        df.columns = ["", "當日交易", "總留倉"]
+        df = df.set_index("")
+        df.index = ["自營期貨(口)", "外資期貨(口)"]
+        df = pd.DataFrame(df.unstack()).T
+        df.index = [time]
+        df2 = df.astype(int)
+
+        df = (df1 + (df2 / 4)).astype(int)
+        df = df.droplevel(0, axis=1)
+        df.columns = ["自營期貨增減", "外資期貨增減", "自營期貨留倉", "外資期貨留倉"]
+        df_2 = df.reindex(columns=["外資期貨留倉", "外資期貨增減", "自營期貨留倉", "自營期貨增減"])
+    except:
+        return None
+
+    # 當日法人選擇權籌碼
+    try:
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/callsAndPutsDate?queryType=1&commodityId=TXO&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[3].dropna().drop([0, 1, 2, 4, 5, 6, 7, 8, 9, 12, 13], axis=1).drop([2, 4, 7])
+        df.columns = ["", "BUY留倉口數", "BUY留倉金額", "總留倉口數", "總留倉金額"]
+        df = df.set_index("")
+        df.index = ["自營CALL", "外資CALL", "自營PUT", "外資PUT"]
+        df = pd.DataFrame(df.unstack()).T
+        df.index = [time]
+        df = df.droplevel(0, axis=1)
+        df.columns = [
+            "自營BC口數",
+            "外資BC口數",
+            "自營BP口數",
+            "外資BP口數",
+            "自營BC金額",
+            "外資BC金額",
+            "自營BP金額",
+            "外資BP金額",
+            "自營CALL口數",
+            "外資CALL口數",
+            "自營PUT口數",
+            "外資PUT口數",
+            "自營CALL金額",
+            "外資CALL金額",
+            "自營PUT金額",
+            "外資PUT金額",
+        ]
+        df = df.drop(["自營BC口數", "外資BC口數", "自營BP口數", "外資BP口數"], axis=1)
+        df = df.reindex(
+            columns=[
+                "外資CALL口數",
+                "外資CALL金額",
+                "外資BC金額",
+                "外資PUT口數",
+                "外資PUT金額",
+                "外資BP金額",
+                "自營CALL口數",
+                "自營CALL金額",
+                "自營BC金額",
+                "自營PUT口數",
+                "自營PUT金額",
+                "自營BP金額",
+            ]
+        )
+        df = df.astype(int)
+        df.insert(6, "外資CALL/PUT比", round(df["外資CALL金額"] / df["外資PUT金額"], 3))
+        df.insert(7, "外資BC/BP比", round(df["外資BC金額"] / df["外資BP金額"], 3))
+        df.insert(14, "自營CALL/PUT比", round(df["自營CALL金額"] / df["自營PUT金額"], 3))
+        df.insert(15, "自營BC/BP比", round(df["自營BC金額"] / df["自營BP金額"], 3))
+        df_3 = df
+    except:
+        return None
+
+    # 散戶籌碼
+    try:
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/futDailyMarketReport?queryType=2&commodity_id=MTX&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[4][["到期月份(週別)", "*未沖銷契約量"]]
+        df1 = pd.DataFrame(df["*未沖銷契約量"]).tail(1)
+        df1.index = [time]
+        df1.columns = ["小台未沖銷契約量"]
+
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/futContractsDate?queryType=1&commodityId=MXF&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[3].dropna()
+        df2 = df[[9, 11]].tail(1)
+        df2.index = [time]
+        df2.columns = ["法人看多", "法人看空"]
+        df = df1.join(df2)
+        df = df.astype(int)
+        df["散戶看多"] = df["小台未沖銷契約量"] - df["法人看多"]
+        df["散戶看空"] = df["小台未沖銷契約量"] - df["法人看空"]
+        df["散戶未平倉"] = df["散戶看多"] - df["散戶看空"]
+        df["散戶多空比"] = round(df["散戶未平倉"] / df["小台未沖銷契約量"] * 100, 2)
+        df_4 = df.drop(["小台未沖銷契約量", "法人看多", "法人看空"], axis=1)
+    except:
+        return None
+
+    # 大額交易人期貨籌碼
+    try:
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/largeTraderFutQry?contractId=TX&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[3].droplevel([0, 1], axis=1)
+        df = df.iloc[:, [2, 4, 6, 8]].tail(2)
+        df.columns = ["五大多", "十大多", "五大空", "十大空"]
+        df.index = ["近月", "所有契約"]
+        df = df.apply(lambda x: x.str.replace(",", "").str.strip(")").str.split("("))
+        df["五大特法多"] = df["五大多"].apply(lambda x: x[1])
+        df["五大多"] = df["五大多"].apply(lambda x: x[0])
+        df["十大特法多"] = df["十大多"].apply(lambda x: x[1])
+        df["十大多"] = df["十大多"].apply(lambda x: x[0])
+        df["五大特法空"] = df["五大空"].apply(lambda x: x[1])
+        df["五大空"] = df["五大空"].apply(lambda x: x[0])
+        df["十大特法空"] = df["十大空"].apply(lambda x: x[1])
+        df["十大空"] = df["十大空"].apply(lambda x: x[0])
+        df = df.astype(int)
+        df["五大留倉"] = df["五大多"] - df["五大空"]
+        df["十大留倉"] = df["十大多"] - df["十大空"]
+        df["五大特法留倉"] = df["五大特法多"] - df["五大特法空"]
+        df["十大特法留倉"] = df["十大特法多"] - df["十大特法空"]
+        df = df[["五大留倉", "十大留倉", "五大特法留倉", "十大特法留倉"]].T
+        df["遠月"] = df["所有契約"] - df["近月"]
+        df = df.drop("所有契約", axis=1)
+        df = pd.DataFrame(df.T.unstack()).T
+        df.index = [time]
+        df_5 = df.droplevel(0, axis=1)
+        df_5.columns = ["近月五大留倉", "遠月五大留倉", "近月十大留倉", "遠月十大留倉", "近月五大特法留倉", "遠月五大特法留倉", "近月十大特法留倉", "遠月十大特法留倉"]
+    except:
+        return None
+
+    # 全部合併
+    try:
+        df = df_1.join([df_2, df_3, df_4, df_5])
+        df.index.name = "date"
+        df = df.reset_index()
+        json_data = json.loads(df.to_json(orient="records"))
+    except:
+        return None
+
+    return json_data
 
 def crawl_ADL(date):
     # 上市
