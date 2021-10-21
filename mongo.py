@@ -44,7 +44,7 @@ def save_to_mongo(func, coll, date_range=False):
     elif coll == "ADL":
         days = 365
         delete_data(days, collection)
-    elif coll == "price" or coll == "monthly_revenue":
+    elif coll == "price" or coll == "monthly_revenue" or coll == "future_option":
         days = 1111
         delete_data(days, collection)
 
