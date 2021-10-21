@@ -1,5 +1,5 @@
 import yfinance as yf
-from mongo import *
+from stock_module.mongo import *
 
 
 def to_excel():
