@@ -255,7 +255,7 @@ def crawl_future_option(date):
         df = dfs[3].dropna().drop([0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14], axis=1).drop([2, 4, 6, 7, 8, 9])
         df.columns = ["", "當日交易", "總留倉"]
         df = df.set_index("")
-        df.index = ["自營期貨(口)", "外資期貨(口)"]
+        df.index = ["自營期貨", "外資期貨"]
         df = pd.DataFrame(df.unstack()).T
         df.index = [time]
         df1 = df.astype(int)
@@ -266,7 +266,7 @@ def crawl_future_option(date):
         df = dfs[3].dropna().drop([0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14], axis=1).drop([2, 4, 6, 7, 8, 9])
         df.columns = ["", "當日交易", "總留倉"]
         df = df.set_index("")
-        df.index = ["自營期貨(口)", "外資期貨(口)"]
+        df.index = ["自營期貨", "外資期貨"]
         df = pd.DataFrame(df.unstack()).T
         df.index = [time]
         df2 = df.astype(int)
@@ -371,32 +371,74 @@ def crawl_future_option(date):
         df.columns = ["五大多", "十大多", "五大空", "十大空"]
         df.index = ["近月", "所有契約"]
         df = df.apply(lambda x: x.str.replace(",", "").str.strip(")").str.split("("))
-        df["五大特法多"] = df["五大多"].apply(lambda x: x[1])
         df["五大多"] = df["五大多"].apply(lambda x: x[0])
-        df["十大特法多"] = df["十大多"].apply(lambda x: x[1])
         df["十大多"] = df["十大多"].apply(lambda x: x[0])
-        df["五大特法空"] = df["五大空"].apply(lambda x: x[1])
         df["五大空"] = df["五大空"].apply(lambda x: x[0])
-        df["十大特法空"] = df["十大空"].apply(lambda x: x[1])
         df["十大空"] = df["十大空"].apply(lambda x: x[0])
         df = df.astype(int)
         df["五大留倉"] = df["五大多"] - df["五大空"]
         df["十大留倉"] = df["十大多"] - df["十大空"]
-        df["五大特法留倉"] = df["五大特法多"] - df["五大特法空"]
-        df["十大特法留倉"] = df["十大特法多"] - df["十大特法空"]
-        df = df[["五大留倉", "十大留倉", "五大特法留倉", "十大特法留倉"]].T
+        df = df[["五大留倉", "十大留倉"]].T
         df["遠月"] = df["所有契約"] - df["近月"]
         df = df.drop("所有契約", axis=1)
         df = pd.DataFrame(df.T.unstack()).T
         df.index = [time]
         df_5 = df.droplevel(0, axis=1)
-        df_5.columns = ["近月五大留倉", "遠月五大留倉", "近月十大留倉", "遠月十大留倉", "近月五大特法留倉", "遠月五大特法留倉", "近月十大特法留倉", "遠月十大特法留倉"]
+        df_5.columns = ["近月五大留倉", "遠月五大留倉", "近月十大留倉", "遠月十大留倉"]
+    except:
+        return None
+
+    # 大額交易人選擇權
+    try:
+        dfs = pd.read_html(
+            f"https://www.taifex.com.tw/cht/3/largeTraderOptQry?contractId=TXO&queryDate={time.year}%2F{time.month}%2F{time.day}"
+        )
+        df = dfs[3].droplevel([0, 1], axis=1)
+        df = df.iloc[[0, 1, 3, 4], [2, 4, 6, 8]]
+        df.columns = ["五大BUY", "十大BUY", "五大SELL", "十大SELL"]
+        df.index = ["周選CALL", "月選CALL", "周選PUT", "月選PUT"]
+        df = df.apply(lambda x: x.str.replace(",", "").str.strip(")").str.split("("))
+        df["五大BUY"] = df["五大BUY"].apply(lambda x: x[0])
+        df["十大BUY"] = df["十大BUY"].apply(lambda x: x[0])
+        df["五大SELL"] = df["五大SELL"].apply(lambda x: x[0])
+        df["十大SELL"] = df["十大SELL"].apply(lambda x: x[0])
+        df = df.apply(lambda s: pd.to_numeric(s, errors="coerce"))
+        df = pd.DataFrame(df.T.unstack()).T
+        df.index = [time]
+        df = df.droplevel(0, axis=1)
+        df.columns = [
+            "周選五大BC",
+            "周選十大BC",
+            "周選五大SC",
+            "周選十大SC",
+            "月選五大BC",
+            "月選十大BC",
+            "月選五大SC",
+            "月選十大SC",
+            "周選五大BP",
+            "周選十大BP",
+            "周選五大SP",
+            "周選十大SP",
+            "月選五大BP",
+            "月選十大BP",
+            "月選五大SP",
+            "月選十大SP",
+        ]
+        df["周選五大CALL"] = df["周選五大BC"] - df["周選五大SC"]
+        df["周選五大PUT"] = df["周選五大BP"] - df["周選五大SP"]
+        df["周選十大CALL"] = df["周選十大BC"] - df["周選十大SC"]
+        df["周選十大PUT"] = df["周選十大BP"] - df["周選十大SP"]
+        df["月選五大CALL"] = df["月選五大BC"] - df["月選五大SC"]
+        df["月選五大PUT"] = df["月選五大BP"] - df["月選五大SP"]
+        df["月選十大CALL"] = df["月選十大BC"] - df["月選十大SC"]
+        df["月選十大PUT"] = df["月選十大BP"] - df["月選十大SP"]
+        df_6 = df.iloc[:, 16:]
     except:
         return None
 
     # 全部合併
     try:
-        df = df_1.join([df_2, df_3, df_4, df_5])
+        df = df_1.join([df_2, df_3, df_4, df_5, df_6])
         df.index.name = "date"
         df = df.reset_index()
         json_data = json.loads(df.to_json(orient="records"))
