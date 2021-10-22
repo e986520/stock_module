@@ -1,10 +1,8 @@
 import yfinance as yf
-from stock_module.mongo import *
+from mongo import *
 
 
 def to_excel():
-    df = get_data("future_option")
-    df = df.set_index("date")
     end = pd.to_datetime(
         [
             "2019/01/16",
@@ -45,6 +43,9 @@ def to_excel():
             "2021/12/15",
         ]
     )
+
+    df = get_data("future_option")
+    df = df.set_index("date")
     df = df.sort_index()
     df.insert(0, "結算日", 0)
     df.insert(5, "外資期貨留倉與結算差", df["外資期貨留倉"])
@@ -81,23 +82,8 @@ def to_excel():
                 df.loc[end[i] : end[i + 1], "自營BP金額與結算差"] = df["自營BP金額"] - df.loc[end[i], "自營BP金額"]
                 df.loc[end[i] : end[i + 1], "自營SP金額與結算差"] = df["自營SP金額"] - df.loc[end[i], "自營SP金額"]
 
-    df = df.drop(
-        [
-            "外資BC金額",
-            "外資SC金額",
-            "外資BP金額",
-            "外資SP金額",
-            "自營BC金額",
-            "自營SC金額",
-            "自營BP金額",
-            "自營SP金額",
-            "近月五大特法留倉",
-            "遠月五大特法留倉",
-            "近月十大特法留倉",
-            "遠月十大特法留倉",
-        ],
-        axis=1,
-    )
+    df = df.drop(["外資BC金額", "外資SC金額", "外資BP金額", "外資SP金額", "自營BC金額", "自營SC金額", "自營BP金額", "自營SP金額"], axis=1)
+    df = df.fillna(0)
 
     market = yf.download("^TWII", start=df.index[0], end=(df.index[-1] + pd.to_timedelta("1 day")))
     market_close = market.Close
