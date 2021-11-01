@@ -598,10 +598,6 @@ def crawl_monthly_revenue(date):
 
 
 def crawl_finance():
-
-    db["finance"].remove()
-    print("Success delete old data!")
-
     # 開始加入新資料
     for i, id in enumerate(stocks_list.index):
         print(f"crawling stock {id} ({i+1}/{len(stocks_list.index)})")
@@ -646,8 +642,13 @@ def crawl_finance():
         except Exception as e:
             print(e)
             continue
+        if datetime.today().date() - pd.offsets.QuarterEnd() == df.date[0]:
+            json_data = json.loads(df.head(1).to_json(orient="records"))
+            save_to_mongo(json_data, "finance")
+        else:
+            print("No new data!")
+            continue
 
-        json_data = json.loads(df.to_json(orient="records"))
-        save_to_mongo(json_data, "finance")
+    delete_data(1111, db["finance"])
 
     return
