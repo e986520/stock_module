@@ -637,7 +637,7 @@ def crawl_finance():
             df["營業利益率"] = df["營業利益率"] * 0.01
             df = df.drop(columns=["稅前淨利率", "稅後淨利率", "營業收入淨額"])
             df = df.reindex(columns=["營業費用", "營業毛利率", "營業利益率", "稅率", "稅後純益", "每股盈餘", "每股淨值", "每股現金流量"])
-            df = df.reset_index()
+            df = df.reset_index().dropna()
 
         except Exception as e:
             print(e)
