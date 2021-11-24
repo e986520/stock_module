@@ -11,6 +11,11 @@ class Select_Data:
         self.當月營收 = self.月營收.iloc[-1]
         self.營收備註 = get_data("monthly_revenue", "備註", 60)
         self.當月營收備註 = self.營收備註.iloc[-1]
+        self.YOY = get_data("monthly_revenue", "YOY%", 60)
+        self.近一月YOY = self.YOY.iloc[-1]
+        self.MOM = get_data("monthly_revenue", "MOM%", 60)
+        self.近一月MOM = self.MOM.iloc[-1]
+        self.近三年最高營收 = self.月營收.iloc[-36:].max()
         self.毛利率 = get_data("finance", "營業毛利率", 180)
         self.近一季毛利率 = self.毛利率.iloc[-1]
         self.營業費用 = get_data("finance", "營業費用", 180)
@@ -24,29 +29,16 @@ class Select_Data:
         self.近一季營業利益率 = self.營業利益率.iloc[-1]
         self.每股淨值 = get_data("finance", "每股淨值", 180)
         self.近一季每股淨值 = self.每股淨值.iloc[-1]
-        self.YOY = get_data("monthly_revenue", "YOY%", 60)
-        self.近一月YOY = self.YOY.iloc[-1]
-        self.MOM = get_data("monthly_revenue", "MOM%", 60)
-        self.近一月MOM = self.MOM.iloc[-1]
-        self.近三年最高營收 = self.月營收.iloc[-36:].max()
+        self.預估稅前純益 = self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出
         self.近兩年稅率 = get_data("finance", "稅率", 888).iloc[-8:]
         self.近兩年稅率 = self.近兩年稅率[self.近兩年稅率 > 0.6]
         self.平均稅率 = self.近兩年稅率[self.近兩年稅率 < 1].mean()
         self.稅率 = self.平均稅率
-        self.預估股價地板 = (
-            (self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出) * self.稅率 * self.近一季每股盈餘 / self.近一季稅後淨利 * 4 * 10
-        )
-        self.預估股價夾板 = (
-            (self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出) * self.稅率 * self.近一季每股盈餘 / self.近一季稅後淨利 * 4 * 15
-        )
-        self.預估股價天花板 = (
-            (self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出) * self.稅率 * self.近一季每股盈餘 / self.近一季稅後淨利 * 4 * 20
-        )
-        self.淨值比預估股價 = (
-            ((self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出) * self.稅率 * self.近一季每股盈餘 / self.近一季稅後淨利 * 4)
-            + self.近一季每股淨值
-        ) * 1.2
-        self.預估稅前純益 = self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出
+        self.預估EPS = self.預估稅前純益 * self.稅率 * self.近一季每股盈餘 / self.近一季稅後淨利 * 4
+        self.預估股價地板 = self.預估EPS * 10
+        self.預估股價夾板 = self.預估EPS * 15
+        self.預估股價天花板 = self.預估EPS * 20
+        self.淨值比預估股價 = (self.預估EPS + self.近一季每股淨值) * 1.2
 
         # 技術面資料
         self.收盤價 = get_data("price", "收盤價", 99)
@@ -80,7 +72,6 @@ class Select_Data:
 
     # 選股清單
     def select_list(self, select_stock, PE=0):
-        # list(select_stock[select_stock].index)
         price = [self.目前股價[x] for x in select_stock]
         rise = [round((self.漲幅[x] - 1) * 100, 2) for x in select_stock]
         volume = [round(self.當日成交值[x] / 100000000, 1) for x in select_stock]
@@ -95,10 +86,7 @@ class Select_Data:
             if PE == 0:
                 appraisal = [round(self.淨值比預估股價[x], 2) for x in select_stock]
             else:
-                appraisal = [
-                    round(self.預估稅前純益[x] * self.稅率[x] * self.近一季每股盈餘[x] / self.近一季稅後淨利[x] * 4 * PE, 2)
-                    for x in select_stock
-                ]
+                appraisal = [round(self.預估EPS[x] * PE, 2) for x in select_stock]
 
         except:
             tax = 0
@@ -134,3 +122,4 @@ class Select_Data:
             except:
                 leagal_person = 0
             return leagal_person
+
