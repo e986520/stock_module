@@ -570,8 +570,21 @@ def crawl_rich_person(date):
             },
         )
         rich_person = pd.read_html(res.text)[0].dropna().iloc[-1, 4]
+
         if rich_person == "無此資料":
-            return None
+            # 停頓10秒後再試一次
+            time.sleep(10)
+            res = requests.post(
+                f"https://www.tdcc.com.tw/smWeb/QryStockAjax.do?scaDates={date}&scaDate={date}&SqlMethod=StockNo&StockNo={id}&StockName=&REQ_OPR=SELECT&clkStockNo={id}&clkStockName=",
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36 Edg/96.0.1054.34"
+                },
+            )
+            rich_person = pd.read_html(res.text)[0].dropna().iloc[-1, 4]
+            # 還是失敗的話就停止
+            if rich_person == "無此資料":
+                return None
+
         arr = [id, rich_person]
         df2 = pd.DataFrame(arr, index=["stock_id", "千張大戶"]).T
         df = pd.concat([df, df2])
