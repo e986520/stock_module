@@ -69,6 +69,9 @@ class Select_Data:
         self.當日融資使用率 = self.融資使用率.iloc[-1]
         self.當日融券使用率 = self.融券使用率.iloc[-1]
         self.當日券資比 = self.當日融券使用率 / self.當日融資使用率 * 100
+        self.千張大戶比例 = get_data("rich_person", "千張大戶", 60)
+        self.千張大戶增減 = self.千張大戶比例.iloc[-1] - self.千張大戶比例.iloc[-2]
+        self.近月千張大戶增減 = self.千張大戶比例.iloc[-1] - self.千張大戶比例.iloc[-5]
 
     # 選股清單
     def select_list(self, select_stock, PE=0):
@@ -78,6 +81,8 @@ class Select_Data:
         volume_percent = [round(self.當日成交量[x] / self.昨日成交量[x], 1) for x in select_stock]
         leagal_person_today = list(map(lambda x: self.legal_person_except(x, "today"), select_stock))
         leagal_person_month = list(map(lambda x: self.legal_person_except(x, "month"), select_stock))
+        rich_person = [round(self.千張大戶增減[x], 2) for x in select_stock]
+        rich_person_month = [round(self.近月千張大戶增減[x], 2) for x in select_stock]
 
         try:
             tax = [round(self.平均稅率[x], 2) for x in select_stock]
@@ -103,6 +108,8 @@ class Select_Data:
         df["稅率"] = tax
         df["投信"] = leagal_person_today
         df["近月投信"] = leagal_person_month
+        df["大戶"] = list(map(lambda x: str(x) + "%", rich_person))
+        df["近月大戶"] = list(map(lambda x: str(x) + "%", rich_person_month))
         df["營收備註"] = remark
         df = df.sort_values(["空間", "投信"], ascending=False)
         df["空間"] = df["空間"].astype(str) + "%"
