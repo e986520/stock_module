@@ -12,8 +12,8 @@ def save_to_mongo(func, coll, date_range=False):
     collection = db[coll]
     if date_range:
         for i, date in enumerate(date_range):
-            # 更新營收前先刪掉當月不完整的營收以便重新更新
-            if coll == "monthly_revenue":
+            # 更新營收前先刪掉不完整的資料以便重新更新
+            if coll == "monthly_revenue" or coll == 'rich_person':
                 timestamp = to_timestamp(pd.to_datetime(date))
                 collection.delete_many({"date": timestamp})
 
