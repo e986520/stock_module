@@ -557,6 +557,29 @@ def crawl_margin_trading(date):
     json_data = json.loads(df.to_json(orient="records"))
     return json_data
 
+def crawl_rich_person(date):
+    date = str(date)[:10].replace("-", "")
+    # 把每支股票合成一個dataframe
+    df = pd.DataFrame()
+    for i, id in enumerate(stocks_list.index):
+        print(f"crawling stock {id} ({i+1}/{len(stocks_list.index)})")
+        res = requests.post(
+            f"https://www.tdcc.com.tw/smWeb/QryStockAjax.do?scaDates={date}&scaDate={date}&SqlMethod=StockNo&StockNo={id}&StockName=&REQ_OPR=SELECT&clkStockNo={id}&clkStockName=",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36 Edg/96.0.1054.34"
+            },
+        )
+        rich_person = pd.read_html(res.text)[0].dropna().iloc[-1, 4]
+        if rich_person == "無此資料":
+            return None
+        arr = [id, rich_person]
+        df2 = pd.DataFrame(arr, index=["stock_id", "千張大戶"]).T
+        df = pd.concat([df, df2])
+
+    df.insert(0, "date", pd.to_datetime(date))
+    df["千張大戶"] = pd.to_numeric(df["千張大戶"], errors="coerce")
+    json_data = json.loads(df.to_json(orient="records"))
+    return json_data
 
 def crawl_monthly_revenue(date):
     # 上市
