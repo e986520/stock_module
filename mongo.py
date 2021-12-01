@@ -39,7 +39,7 @@ def save_to_mongo(func, coll, date_range=False):
 
     # 刪掉舊資料
     if coll == "margin_trading" or coll == "legal_person" or coll == "rich_person":
-        days = 31
+        days = 90
         delete_data(days, collection)
     elif coll == "ADL":
         days = 365
