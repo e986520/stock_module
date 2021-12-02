@@ -570,8 +570,12 @@ def crawl_rich_person(date):
             },
         )
         try:
-            rich_person = pd.read_html(res.text)[0].dropna().iloc[-1, 4]
-            poor_person = pd.read_html(res.text)[0].dropna().iloc[1:10, 4].astype(float).sum()
+            data = pd.read_html(res.text)[0]
+            rich_person = data.dropna().iloc[-1, 4]
+            poor_person = data.dropna().iloc[1:10, 4].astype(float).sum()
+            all_people = float(data.drop(0, axis=1).dropna().iloc[-1, 1])
+            all_stocks = float(data.drop(0, axis=1).dropna().iloc[-1, 2]) / 1000
+            mean = round(all_stocks / all_people, 2)
         except:
             # 停頓10秒後再試一次
             time.sleep(10)
@@ -582,14 +586,18 @@ def crawl_rich_person(date):
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.55 Safari/537.36 Edg/96.0.1054.34"
                     },
                 )
-                rich_person = pd.read_html(res.text)[0].dropna().iloc[-1, 4]
-                poor_person = pd.read_html(res.text)[0].dropna().iloc[1:10, 4].astype(float).sum()
+                data = pd.read_html(res.text)[0]
+                rich_person = data.dropna().iloc[-1, 4]
+                poor_person = data.dropna().iloc[1:10, 4].astype(float).sum()
+                all_people = float(data.drop(0, axis=1).dropna().iloc[-1, 1])
+                all_stocks = float(data.drop(0, axis=1).dropna().iloc[-1, 2]) / 1000
+                mean = round(all_stocks / all_people, 2)
             # 還是失敗的話就停止
             except:
                 return None
 
-        arr = [id, rich_person, poor_person]
-        df2 = pd.DataFrame(arr, index=["stock_id", "千張大戶", "散戶"]).T
+        arr = [id, rich_person, poor_person, mean]
+        df2 = pd.DataFrame(arr, index=["stock_id", "千張大戶", "散戶", "均張"]).T
         df = pd.concat([df, df2])
 
     df.insert(0, "date", pd.to_datetime(date))
