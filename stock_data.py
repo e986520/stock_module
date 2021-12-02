@@ -75,7 +75,10 @@ class Select_Data:
         self.散戶比例 = get_data("rich_person", "散戶", 60)
         self.散戶增減 = self.散戶比例.iloc[-1] - self.散戶比例.iloc[-2]
         self.近月散戶增減 = self.散戶比例.iloc[-1] - self.散戶比例.iloc[-5]
-
+        self.均張 = get_data("rich_person", "均張", 60)
+        self.均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-2]) - 1) * 100
+        self.近月均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-5]) - 1) * 100
+        
     # 選股清單
     def select_list(self, select_stock, PE=0):
         price = [self.目前股價[x] for x in select_stock]
@@ -88,6 +91,8 @@ class Select_Data:
         rich_person_month = [round(self.近月千張大戶增減[x], 2) for x in select_stock]
         poor_person = [round(self.散戶增減[x], 2) for x in select_stock]
         poor_person_month = [round(self.近月散戶增減[x], 2) for x in select_stock]
+        mean = [round(self.均張增減[x], 2) for x in select_stock]
+        mean_month = [round(self.近月均張增減[x], 2) for x in select_stock]
 
         try:
             tax = [round(self.平均稅率[x], 2) for x in select_stock]
@@ -117,6 +122,8 @@ class Select_Data:
         df["近月大戶"] = list(map(lambda x: str(x) + "%", rich_person_month))
         df["散戶"] = list(map(lambda x: str(x) + "%", poor_person))
         df["近月散戶"] = list(map(lambda x: str(x) + "%", poor_person_month))
+        df["均張"] = list(map(lambda x: str(x) + "%", mean))
+        df["近月均張"] = list(map(lambda x: str(x) + "%", mean_month))
         df["營收備註"] = remark
         df = df.sort_values(["空間", "投信"], ascending=False)
         df["空間"] = df["空間"].astype(str) + "%"
