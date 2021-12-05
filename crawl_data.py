@@ -561,7 +561,10 @@ def crawl_rich_person(date):
     date = str(date)[:10].replace("-", "")
     # 把每支股票合成一個dataframe
     df = pd.DataFrame()
+    fail = 0
     for i, id in enumerate(stocks_list.index):
+        if fail >= 5:
+            return None
         print(f"crawling stock {id} ({i+1}/{len(stocks_list.index)})")
         res = requests.post(
             f"https://www.tdcc.com.tw/smWeb/QryStockAjax.do?scaDates={date}&scaDate={date}&SqlMethod=StockNo&StockNo={id}&StockName=&REQ_OPR=SELECT&clkStockNo={id}&clkStockName=",
@@ -594,7 +597,8 @@ def crawl_rich_person(date):
                 mean = round(all_stocks / all_people, 2)
             # 還是失敗的話就停止
             except:
-                return None
+                print("There is no data!")
+                fail += 1
 
         arr = [id, rich_person, poor_person, mean]
         df2 = pd.DataFrame(arr, index=["stock_id", "千張大戶", "散戶", "均張"]).T
