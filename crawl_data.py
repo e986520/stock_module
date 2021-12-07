@@ -649,7 +649,11 @@ def crawl_monthly_revenue(date):
     return json_data
 
 
-def crawl_finance():
+def crawl_finance(stocks=False):
+    if stocks:
+        new_stocks_list = stocks
+    else:
+        new_stocks_list = stocks_list.index
     # 開始加入新資料
     for i, id in enumerate(stocks_list.index):
         print(f"crawling stock {id} ({i+1}/{len(stocks_list.index)})")
