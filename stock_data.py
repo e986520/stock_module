@@ -31,9 +31,7 @@ class Select_Data:
         self.近一季每股淨值 = self.每股淨值.iloc[-1]
         self.預估稅前純益 = self.當月營收 * 3 * self.近一季毛利率 - self.近一季營業費用 + self.業外收入及支出
         self.近兩年稅率 = get_data("finance", "稅率", 888).iloc[-8:]
-        self.近兩年稅率 = self.近兩年稅率[self.近兩年稅率 > 0.6]
-        self.平均稅率 = self.近兩年稅率[self.近兩年稅率 < 1].mean()
-        self.稅率 = self.平均稅率
+        self.稅率 = self.近兩年稅率[(self.近兩年稅率 > 0.6) & (self.近兩年稅率 < 1)].mean()
         self.預估EPS = self.預估稅前純益 * self.稅率 * self.近一季每股盈餘 / self.近一季稅後淨利 * 4
         self.預估股價地板 = self.預估EPS * 10
         self.預估股價夾板 = self.預估EPS * 15
@@ -78,7 +76,7 @@ class Select_Data:
         self.均張 = get_data("rich_person", "均張", 60)
         self.均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-2]) - 1) * 100
         self.近月均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-5]) - 1) * 100
-        
+
     # 選股清單
     def select_list(self, select_stock, PE=0):
         price = [self.目前股價[x] for x in select_stock]
@@ -93,10 +91,10 @@ class Select_Data:
         poor_person_month = [round(self.近月散戶增減[x], 2) for x in select_stock]
         mean = [round(self.均張增減[x], 2) for x in select_stock]
         mean_month = [round(self.近月均張增減[x], 2) for x in select_stock]
+        remark = [self.當月營收備註[x] for x in select_stock]
 
         try:
-            tax = [round(self.平均稅率[x], 2) for x in select_stock]
-            remark = [self.當月營收備註[x] for x in select_stock]
+            tax = [round(self.稅率[x], 2) for x in select_stock]
 
             if PE == 0:
                 appraisal = [round(self.淨值比預估股價[x], 2) for x in select_stock]
@@ -106,7 +104,6 @@ class Select_Data:
         except:
             tax = 0
             appraisal = 0
-            remark = "-"
 
         df = stocks_list.loc[select_stock].drop(columns="市場")
         df["股價"] = price
@@ -143,4 +140,5 @@ class Select_Data:
             except:
                 leagal_person = 0
             return leagal_person
+
 
