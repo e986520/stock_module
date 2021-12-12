@@ -61,6 +61,7 @@ class Select_Data:
         # 籌碼面資料
         self.投信買賣超張數 = get_data("legal_person", "投信買賣超張數", 31)
         self.當日投信買賣超 = self.投信買賣超張數.iloc[-1]
+        self.近兩周投信買賣超 = self.投信買賣超張數.iloc[-10:].sum()
         self.近一月投信買賣超 = self.投信買賣超張數.iloc[-20:].sum()
         self.融資使用率 = get_data("margin_trading", "融資使用率", 6)
         self.融券使用率 = get_data("margin_trading", "融券使用率", 6)
@@ -74,7 +75,8 @@ class Select_Data:
         self.散戶增減 = self.散戶比例.iloc[-1] - self.散戶比例.iloc[-2]
         self.近月散戶增減 = self.散戶比例.iloc[-1] - self.散戶比例.iloc[-5]
         self.均張 = get_data("rich_person", "均張", 60)
-        self.均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-2]) - 1) * 100
+        self.均張增減 = self.均張.pct_change() * 100
+        self.當周均張增減 = self.均張增減.iloc[-1]
         self.近月均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-5]) - 1) * 100
 
     # 選股清單
@@ -89,7 +91,7 @@ class Select_Data:
         rich_person_month = [round(self.近月千張大戶增減[x], 2) for x in select_stock]
         poor_person = [round(self.散戶增減[x], 2) for x in select_stock]
         poor_person_month = [round(self.近月散戶增減[x], 2) for x in select_stock]
-        mean = [round(self.均張增減[x], 2) for x in select_stock]
+        mean = [round(self.當周均張增減[x], 2) for x in select_stock]
         mean_month = [round(self.近月均張增減[x], 2) for x in select_stock]
         remark = [self.當月營收備註[x] for x in select_stock]
 
