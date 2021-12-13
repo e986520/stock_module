@@ -171,7 +171,7 @@ def crawl_legal_person(date):
 
     try:
         r = requests.get(
-            f"http://www.tse.com.tw/fund/T86?response=csv&date={datestr}&selectType=ALLBUT0999", headers=headers
+            f"https://www.twse.com.tw/fund/T86?response=csv&date={datestr}&selectType=ALLBUT0999", headers=headers
         )
     except:
         return None
