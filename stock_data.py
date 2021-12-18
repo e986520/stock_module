@@ -42,13 +42,13 @@ class Select_Data:
         self.收盤價 = get_data("price", "收盤價", 99)
         self.目前股價 = self.收盤價.iloc[-1]
         self.昨日股價 = self.收盤價.iloc[-2]
-        self.漲幅 = self.目前股價 / self.昨日股價
+        self.近五日最高價 = self.收盤價.iloc[-5:].max()
+        self.漲幅 = self.收盤價.pct_change()
         self.月線扣抵值 = self.收盤價.iloc[-21]
         self.季線扣抵值 = self.收盤價.iloc[-61]
-        self.成交量 = get_data("price", "成交股數", 6) / 1000
-        self.當日成交量 = self.成交量.iloc[-1]
-        self.昨日成交量 = self.成交量.iloc[-2]
-        self.成交值 = get_data("price", "成交金額", 6)
+        self.成交量 = get_data("price", "成交股數", 10) / 1000
+        self.量比 = self.成交量.pct_change() + 1
+        self.成交值 = get_data("price", "成交金額", 10)
         self.當日成交值 = self.成交值.iloc[-1]
         self.五日均量 = self.成交量.iloc[-5:].mean()
         self.近一季最高價 = self.收盤價.iloc[-60:].max()
@@ -60,7 +60,10 @@ class Select_Data:
 
         # 籌碼面資料
         self.投信買賣超張數 = get_data("legal_person", "投信買賣超張數", 31)
+        self.投信買賣超金額 = self.投信買賣超張數 * self.收盤價
         self.當日投信買賣超 = self.投信買賣超張數.iloc[-1]
+        self.近三日投信買賣超 = self.投信買賣超張數.iloc[-3:].sum()
+        self.近一周投信買賣超 = self.投信買賣超張數.iloc[-5:].sum()
         self.近兩周投信買賣超 = self.投信買賣超張數.iloc[-10:].sum()
         self.近一月投信買賣超 = self.投信買賣超張數.iloc[-20:].sum()
         self.融資使用率 = get_data("margin_trading", "融資使用率", 6)
@@ -82,9 +85,9 @@ class Select_Data:
     # 選股清單
     def select_list(self, select_stock, PE=0):
         price = [self.目前股價[x] for x in select_stock]
-        rise = [round((self.漲幅[x] - 1) * 100, 2) for x in select_stock]
+        rise = [round(self.漲幅[x].iloc[-1] * 100, 2) for x in select_stock]
         volume = [round(self.當日成交值[x] / 100000000, 1) for x in select_stock]
-        volume_percent = [round(self.當日成交量[x] / self.昨日成交量[x], 1) for x in select_stock]
+        volume_percent = [round(self.量比[x].iloc[-1], 1) for x in select_stock]
         leagal_person_today = list(map(lambda x: self.legal_person_except(x, "today"), select_stock))
         leagal_person_month = list(map(lambda x: self.legal_person_except(x, "month"), select_stock))
         rich_person = [round(self.千張大戶增減[x], 2) for x in select_stock]
