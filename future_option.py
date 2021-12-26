@@ -105,3 +105,41 @@ def to_excel():
     df = df[df.index >= end_in_df[0]]
 
     df.tail(2).to_excel("籌碼更新.xlsx")
+    return
+
+def option_price(date):
+    market = 0
+    time = pd.to_datetime(date)
+    dfs = pd.read_html(
+        f"https://www.taifex.com.tw/cht/3/optDailyMarketReport?queryType=2&marketCode={market}&commodity_id=TXO&queryDate={time.year}%2F{time.month}%2F{time.day}&MarketCode={market}&commodity_idt=TXO"
+    )
+    try:
+        df = dfs[4]
+        call = df[df["買賣權"] == "Call"]
+        put = df[df["買賣權"] == "Put"]
+    except:
+        print("fail!maybe it's a holiday")
+        return
+    
+    if "W" in call.loc[0, "到期月份(週別)"]:
+        call = call[call.loc[:, "到期月份(週別)"].str.contains("W")]
+    call = call.set_index(["到期月份(週別)"])
+    call = call.apply(lambda x: pd.to_numeric(x, errors="coerce"))
+    call = call[["履約價", "最後成交價", "*未沖銷契約量"]].dropna()
+    call["換算台指"] = call["履約價"] + call["最後成交價"] - call["最後成交價"].shift(-2)
+    call = call.nlargest(4, "*未沖銷契約量")
+    call = call.sort_values("履約價")
+
+    if "W" in put.loc[1, "到期月份(週別)"]:
+        put = put[put.loc[:, "到期月份(週別)"].str.contains("W")]
+    put = put.set_index(["到期月份(週別)"])
+    put = put.apply(lambda x: pd.to_numeric(x, errors="coerce"))
+    put = put[["履約價", "最後成交價", "*未沖銷契約量"]].dropna()
+    put["換算台指"] = put["履約價"] - put["最後成交價"] + put["最後成交價"].shift(2)
+    put = put.nlargest(4, "*未沖銷契約量")
+    put = put.sort_values("履約價")
+
+    df = pd.concat([put, call])
+    df = df.drop("最後成交價", axis=1)
+    df.to_excel("大盤支撐壓力更新.xlsx")
+    return
