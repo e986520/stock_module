@@ -561,6 +561,34 @@ def crawl_margin_trading(date):
     json_data = json.loads(df.to_json(orient="records"))
     return json_data
 
+
+def crawl_borrow_coupon(date):
+    datestr = date.strftime("%Y%m%d")
+    try:
+        r = requests.get(
+            f"https://www.twse.com.tw/exchangeReport/TWT72U?response=csv&date={datestr}&selectType=SLBNLB",
+            headers=headers,
+        )
+    except:
+        return None
+    try:
+        df = pd.read_csv(
+            StringIO(r.text), skiprows=1, skipfooter=7, header=0, index_col=0, engine="python", encoding="utf-8"
+        )
+        df = df[~df.index.str.contains("=")]
+        df = df.iloc[:, [4]]
+        df = df.apply(lambda s: s.str.replace(",", ""))
+        df = df.apply(lambda s: pd.to_numeric(s, errors="coerce"))
+        df = df.reset_index()
+        df.columns = ["stock_id", "借券餘額"]
+        df.insert(1, "date", date)
+    except:
+        return None
+    json_data = json.loads(df.to_json(orient="records"))
+
+    return json_data
+
+
 def crawl_rich_person(date):
     date = str(date)[:10].replace("-", "")
     # 把每支股票合成一個dataframe
