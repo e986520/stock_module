@@ -96,12 +96,22 @@ def to_excel():
 
     df = df.drop(["自營BC金額", "自營SC金額", "自營BP金額", "自營SP金額"], axis=1)
     df = df.fillna(0)
+    df.insert(38, "散戶多單增減", df["散戶看多"] - df["散戶看多"].shift(1))
+    df.insert(39, "散戶空單增減", df["散戶看空"] - df["散戶看空"].shift(1))
+    df["散戶CALL口數"] = -(df["外資CALL口數"] + df["自營CALL口數"])
+    df["散戶CALL金額"] = -(df["外資CALL金額"] + df["自營CALL金額"])
+    df["散戶PUT口數"] = -(df["外資PUT口數"] + df["自營PUT口數"])
+    df["散戶PUT金額"] = -(df["外資PUT金額"] + df["自營PUT金額"])
+    df["散戶CALL/PUT比"] = round(df["散戶CALL金額"] / df["散戶PUT金額"], 3)
+    df["散戶CALL/PUT絕對值"] = df["散戶CALL/PUT比"].abs()
 
     market = yf.download("^TWII", start=df.index[0], end=(df.index[-1] + pd.to_timedelta("1 day")))
-    market_close = market.Close
-    df.insert(0, "加權指數", round(market_close, 2))
+    market_close = round(market.Close, 2)
+    market_high_low = round(market.High - market.Low, 2)
+    df.insert(0, "加權指數", market_close)
     df.insert(1, "漲跌", df["加權指數"] - df["加權指數"].shift(1))
     df.insert(2, "漲跌%", df["加權指數"].pct_change())
+    df.insert(3, "高低差", market_high_low)
     df = df[df.index >= end_in_df[0]]
 
     df.tail(2).to_excel("籌碼更新.xlsx")
@@ -146,4 +156,3 @@ def option_price(date):
     df.to_excel("大盤支撐壓力更新.xlsx")
 
     return
-
