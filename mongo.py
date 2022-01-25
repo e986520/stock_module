@@ -38,7 +38,7 @@ def save_to_mongo(func, coll, date_range=False):
             print("Fail! there is duplicate data.")
 
     # 刪掉舊資料
-    if coll == "margin_trading" or coll == "legal_person" or coll == "rich_person":
+    if coll == "margin_trading" or coll == "legal_person" or coll == "rich_person" or coll == "borrow_coupon":
         days = 90
         delete_data(days, collection)
     elif coll == "ADL":
