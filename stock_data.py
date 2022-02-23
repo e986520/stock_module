@@ -44,11 +44,12 @@ class Select_Data:
         self.昨日股價 = self.收盤價.iloc[-2]
         self.近五日最高價 = self.收盤價.iloc[-5:].max()
         self.漲幅 = self.收盤價.pct_change()
-        self.月線扣抵值 = self.收盤價.iloc[-21]
-        self.季線扣抵值 = self.收盤價.iloc[-61]
+        self.月線扣抵值 = self.收盤價 - self.收盤價.shift(20)
+        self.季線扣抵值 = self.收盤價 - self.收盤價.shift(60)
         self.成交量 = get_data("price", "成交股數", 99) / 1000
+        self.當日成交量 = self.成交量.iloc[-1]
         self.量比 = self.成交量.pct_change() + 1
-        self.成交值 = get_data("price", "成交金額", 10)
+        self.成交值 = get_data("price", "成交金額", 6)
         self.當日成交值 = self.成交值.iloc[-1]
         self.五日均量 = self.成交量.iloc[-5:].mean()
         self.近一季最高價 = self.收盤價.iloc[-60:].max()
@@ -57,6 +58,12 @@ class Select_Data:
         self.SMA10 = self.收盤價.rolling(10).mean()
         self.SMA20 = self.收盤價.rolling(20).mean()
         self.SMA60 = self.收盤價.rolling(60).mean()
+        self.VMA5 = self.成交量.rolling(5).mean()
+        self.VMA13 = self.成交量.rolling(13).mean()
+        self.VMA34 = self.成交量.rolling(34).mean()
+        self.VMA5扣抵值 = self.成交量 - self.成交量.shift(5)
+        self.VMA13扣抵值 = self.成交量 - self.成交量.shift(13)
+        self.VMA34扣抵值 = self.成交量 - self.成交量.shift(34)
 
         # 籌碼面資料
         self.投信買賣超張數 = get_data("legal_person", "投信買賣超張數", 31)
@@ -71,6 +78,9 @@ class Select_Data:
         self.當日融資使用率 = self.融資使用率.iloc[-1]
         self.當日融券使用率 = self.融券使用率.iloc[-1]
         self.當日券資比 = self.當日融券使用率 / self.當日融資使用率 * 100
+        self.借券餘額 = get_data("borrow_coupon", "借券餘額", 99) / 1000
+        self.借券餘額增減 = self.借券餘額.pct_change() * 100
+        self.近月借券餘額增減 = (self.借券餘額.iloc[-1] / self.借券餘額.iloc[-21] - 1) * 100
         self.千張大戶比例 = get_data("rich_person", "千張大戶", 99)
         self.千張大戶增減 = self.千張大戶比例.iloc[-1] - self.千張大戶比例.iloc[-2]
         self.近月千張大戶增減 = self.千張大戶比例.iloc[-1] - self.千張大戶比例.iloc[-5]
@@ -80,6 +90,7 @@ class Select_Data:
         self.均張 = get_data("rich_person", "均張", 99)
         self.當周均張 = self.均張.iloc[-1]
         self.近月最高均張 = self.均張.iloc[-5:].max()
+        self.近月最低均張 = self.均張.iloc[-5:].min()
         self.均張增減 = self.均張.pct_change() * 100
         self.當周均張增減 = self.均張增減.iloc[-1]
         self.近月均張增減 = ((self.均張.iloc[-1] / self.均張.iloc[-5]) - 1) * 100
