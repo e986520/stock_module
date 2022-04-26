@@ -39,14 +39,14 @@ class Select_Data:
         self.淨值比預估股價 = (self.預估EPS + self.近一季每股淨值) * 1.2
 
         # 技術面資料
-        self.收盤價 = get_data("price", "收盤價", 99)
+        self.收盤價 = get_data("price", "收盤價", 120)
         self.目前股價 = self.收盤價.iloc[-1]
         self.昨日股價 = self.收盤價.iloc[-2]
         self.近五日最高價 = self.收盤價.iloc[-5:].max()
         self.漲幅 = self.收盤價.pct_change()
         self.月線扣抵值 = self.收盤價 - self.收盤價.shift(20)
         self.季線扣抵值 = self.收盤價 - self.收盤價.shift(60)
-        self.成交量 = get_data("price", "成交股數", 99) / 1000
+        self.成交量 = get_data("price", "成交股數", 120) / 1000
         self.當日成交量 = self.成交量.iloc[-1]
         self.量比 = self.成交量.pct_change() + 1
         self.成交值 = get_data("price", "成交金額", 6)
@@ -158,5 +158,3 @@ class Select_Data:
             except:
                 leagal_person = 0
             return leagal_person
-
-
