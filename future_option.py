@@ -1,7 +1,6 @@
 import yfinance as yf
 from stock_module.mongo import *
 
-
 def to_excel():
     end = pd.to_datetime(
         [
@@ -69,14 +68,17 @@ def to_excel():
     df.insert(19, "外資SP金額", df["外資BP金額"] - df["外資PUT金額"])
     df.insert(20, "外資BP金額與結算差", df["外資BP金額"])
     df.insert(21, "外資SP金額與結算差", df["外資SP金額"])
-    df.insert(24, "外資SC/SP比", round(df["外資SC金額"] / df["外資SP金額"], 3))
-    df.insert(28, "自營BC金額與結算差", df["自營BC金額"])
-    df.insert(29, "自營SC金額", df["自營BC金額"] - df["自營CALL金額"])
-    df.insert(30, "自營SC金額與結算差", df["自營SC金額"])
-    df.insert(34, "自營BP金額與結算差", df["自營BP金額"])
-    df.insert(35, "自營SP金額", df["自營BP金額"] - df["自營PUT金額"])
-    df.insert(36, "自營SP金額與結算差", df["自營SP金額"])
-    df.insert(39, "自營SC/SP比", round(df["自營SC金額"] / df["自營SP金額"], 3))
+    df.insert(23, "外資CALL/PUT比絕對值", df["外資CALL/PUT比"].abs())
+    df.insert(25, "外資BC/BP比絕對值", df["外資BC/BP比"].abs())
+    df.insert(26, "外資SC/SP比", round(df["外資SC金額"] / df["外資SP金額"], 3))
+    df.insert(27, "外資SC/SP比絕對值", df["外資SC/SP比"].abs())
+    df.insert(31, "自營BC金額與結算差", df["自營BC金額"])
+    df.insert(32, "自營SC金額", df["自營BC金額"] - df["自營CALL金額"])
+    df.insert(33, "自營SC金額與結算差", df["自營SC金額"])
+    df.insert(37, "自營BP金額與結算差", df["自營BP金額"])
+    df.insert(38, "自營SP金額", df["自營BP金額"] - df["自營PUT金額"])
+    df.insert(39, "自營SP金額與結算差", df["自營SP金額"])
+    df.insert(42, "自營SC/SP比", round(df["自營SC金額"] / df["自營SP金額"], 3))
 
     end_in_df = []
     for i in range(len(end) - 1):
@@ -96,8 +98,8 @@ def to_excel():
 
     df = df.drop(["自營BC金額", "自營SC金額", "自營BP金額", "自營SP金額"], axis=1)
     df = df.fillna(0)
-    df.insert(38, "散戶多單增減", df["散戶看多"] - df["散戶看多"].shift(1))
-    df.insert(39, "散戶空單增減", df["散戶看空"] - df["散戶看空"].shift(1))
+    df.insert(41, "散戶多單增減", df["散戶看多"] - df["散戶看多"].shift(1))
+    df.insert(42, "散戶空單增減", df["散戶看空"] - df["散戶看空"].shift(1))
     df["散戶CALL口數"] = -(df["外資CALL口數"] + df["自營CALL口數"])
     df["散戶CALL金額"] = -(df["外資CALL金額"] + df["自營CALL金額"])
     df["散戶PUT口數"] = -(df["外資PUT口數"] + df["自營PUT口數"])
@@ -117,6 +119,7 @@ def to_excel():
     df.tail(2).to_excel("籌碼更新.xlsx")
 
     return
+
 
 
 def option_price(date):
